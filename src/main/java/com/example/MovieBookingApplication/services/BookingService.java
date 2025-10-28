@@ -2,6 +2,7 @@ package com.example.MovieBookingApplication.services;
 
 import com.example.MovieBookingApplication.Entities.Booking;
 import com.example.MovieBookingApplication.Entities.BookingStatus;
+import com.example.MovieBookingApplication.Entities.Show;
 import com.example.MovieBookingApplication.Repositories.BookingRepository;
 import com.example.MovieBookingApplication.Repositories.ShowRepository;
 import com.example.MovieBookingApplication.Repositories.UserRepository;
@@ -36,19 +37,33 @@ public class BookingService {
     }
 
     public Booking addBooking(BookingDTO bookingDTO){
-        Booking booking = new Booking();
+        Show show = showRepository.findById(bookingDTO.getShowID()).
+                orElseThrow(() -> new RuntimeException("Not show found"));
+        if (isThereAnyAvailableSeats(show, bookingDTO.getNumberOfSeats())){
+            Booking booking = new Booking();
 
-        booking.setBookingStatus(bookingDTO.getBookingStatus());
-        booking.setNumberOfSeats(bookingDTO.getNumberOfSeats());
-        booking.setSeatsNumbers(bookingDTO.getSeatsNumbers());
-        booking.setPrice(bookingDTO.getPrice());
-        booking.setBookingTime(bookingDTO.getBookingTime());
-        booking.setUser(userRepository.findById(bookingDTO.getUserID())
-                .orElseThrow(()-> new RuntimeException("There is no user with id : " + bookingDTO.getUserID())));
-        booking.setShow(showRepository.findById(bookingDTO.getShowID())
-                .orElseThrow(()-> new RuntimeException("There is no show with id : " + bookingDTO.getShowID())));
+            booking.setBookingStatus(bookingDTO.getBookingStatus());
+            booking.setNumberOfSeats(bookingDTO.getNumberOfSeats());
+            booking.setSeatsNumbers(bookingDTO.getSeatsNumbers());
+            booking.setPrice(bookingDTO.getPrice());
+            booking.setBookingTime(bookingDTO.getBookingTime());
+            booking.setUser(userRepository.findById(bookingDTO.getUserID())
+                    .orElseThrow(()-> new RuntimeException("There is no user with id : " + bookingDTO.getUserID())));
+            booking.setShow(showRepository.findById(bookingDTO.getShowID())
+                    .orElseThrow(()-> new RuntimeException("There is no show with id : " + bookingDTO.getShowID())));
 
-        return bookingRepository.save(booking);
+            return bookingRepository.save(booking);
+        }else throw new RuntimeException("There are no available seats");
+    }
+
+    public boolean isThereAnyAvailableSeats(Show show, Integer numberOfSeats){
+        int bookedSeats = show.getBooking()
+                .stream()
+                .filter(book -> book.getBookingStatus() != BookingStatus.CANCELED)
+                .mapToInt(Booking :: getNumberOfSeats)
+                .sum();
+
+        return (show.getTheater().getTheaterCapacity() - bookedSeats) >= numberOfSeats;
     }
 
     public Booking updateBooking(Long id, BookingDTO bookingDTO){
