@@ -8,9 +8,11 @@ import com.example.MovieBookingApplication.Repositories.ShowRepository;
 import com.example.MovieBookingApplication.Repositories.UserRepository;
 import com.example.MovieBookingApplication.dtos.BookingDTO;
 import jakarta.transaction.Transactional;
+import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -53,11 +55,11 @@ public class BookingService {
 
         Booking booking = new Booking();
 
-        booking.setBookingStatus(bookingDTO.getBookingStatus());
+        booking.setBookingStatus(BookingStatus.PENDING);
         booking.setNumberOfSeats(bookingDTO.getNumberOfSeats());
         booking.setSeatsNumbers(bookingDTO.getSeatsNumbers());
-        booking.setPrice(bookingDTO.getPrice());
-        booking.setBookingTime(bookingDTO.getBookingTime());
+        booking.setPrice(calculateTotalPrice(show.getPrice(), bookingDTO.getNumberOfSeats()));
+        booking.setBookingTime(LocalDateTime.now());
         booking.setUser(userRepository.findById(bookingDTO.getUserID())
                 .orElseThrow(()-> new RuntimeException("There is no user with id : " + bookingDTO.getUserID())));
         booking.setShow(showRepository.findById(bookingDTO.getShowID())
@@ -93,6 +95,10 @@ public class BookingService {
 
     }
 
+    public double calculateTotalPrice(double price, int numOfSeats){
+        return price * numOfSeats;
+    }
+
     public Booking updateBooking(Long id, BookingDTO bookingDTO){
         Booking booking = bookingRepository.findById(id)
                 .orElseThrow(()-> new RuntimeException("There is no booking with id : " + id));
@@ -111,13 +117,29 @@ public class BookingService {
     }
 
     public void deleteBooking(Long id){
-        if(bookingRepository.existsById(id)){
-            bookingRepository.deleteById(id);
-        }else throw new RuntimeException("There is no booking with id : " + id);
+        Booking booking = bookingRepository.findById(id)
+                .orElseThrow(()-> new RuntimeException("There is no booking with id : " + id));
+
+        validateCancellation(booking);
+
+        bookingRepository.deleteById(id);
     }
 
+    public void validateCancellation(Booking booking){
+        LocalDateTime bookingTime = booking.getShow().getShowTime();
+        LocalDateTime deadLineTime = bookingTime.minusHours(2);
+        if (LocalDateTime.now().isAfter(deadLineTime)){
+            throw new RuntimeException("Cannot delete the booking before 2 hours of the show");
+        }
+    }
     @Transactional
     public Booking updateBookingStatus(Long id, BookingStatus bookingStatus){
+        Booking booking = bookingRepository.findById(id)
+                .orElseThrow(()-> new RuntimeException("There is no booking with this id"));
+
+        if(booking.getBookingStatus() != BookingStatus.PENDING){
+            throw new RuntimeException("Booking status must be in pending status");
+        }
         return bookingRepository.updateBookingStatus(id, bookingStatus).
                 orElseThrow(()-> new RuntimeException("There is no show for this id"));
     }
