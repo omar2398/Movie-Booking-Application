@@ -6,6 +6,6 @@ import lombok.Data;
 public class TheaterDTO {
     private String theaterName;
     private String theaterLocation;
-    private String theaterCapacity;
+    private Integer theaterCapacity;
     private String theaterScreenType;
 }

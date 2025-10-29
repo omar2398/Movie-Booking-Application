@@ -8,7 +8,6 @@ import com.example.MovieBookingApplication.Repositories.ShowRepository;
 import com.example.MovieBookingApplication.Repositories.UserRepository;
 import com.example.MovieBookingApplication.dtos.BookingDTO;
 import jakarta.transaction.Transactional;
-import lombok.Data;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
