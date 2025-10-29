@@ -12,6 +12,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class BookingService {
@@ -39,21 +41,29 @@ public class BookingService {
     public Booking addBooking(BookingDTO bookingDTO){
         Show show = showRepository.findById(bookingDTO.getShowID()).
                 orElseThrow(() -> new RuntimeException("Not show found"));
-        if (isThereAnyAvailableSeats(show, bookingDTO.getNumberOfSeats())){
-            Booking booking = new Booking();
+        if (bookingDTO.getNumberOfSeats() != bookingDTO.getSeatsNumbers().size()){
+            throw new RuntimeException("Number of seats and seat numbers must be equal!");
+        }
 
-            booking.setBookingStatus(bookingDTO.getBookingStatus());
-            booking.setNumberOfSeats(bookingDTO.getNumberOfSeats());
-            booking.setSeatsNumbers(bookingDTO.getSeatsNumbers());
-            booking.setPrice(bookingDTO.getPrice());
-            booking.setBookingTime(bookingDTO.getBookingTime());
-            booking.setUser(userRepository.findById(bookingDTO.getUserID())
-                    .orElseThrow(()-> new RuntimeException("There is no user with id : " + bookingDTO.getUserID())));
-            booking.setShow(showRepository.findById(bookingDTO.getShowID())
-                    .orElseThrow(()-> new RuntimeException("There is no show with id : " + bookingDTO.getShowID())));
+        if (!isThereAnyAvailableSeats(show, bookingDTO.getNumberOfSeats())){
+            throw new RuntimeException("There are no available seats");
+        }
 
-            return bookingRepository.save(booking);
-        }else throw new RuntimeException("There are no available seats");
+        validateDuplicationOfSeats(show, bookingDTO.getSeatsNumbers());
+
+        Booking booking = new Booking();
+
+        booking.setBookingStatus(bookingDTO.getBookingStatus());
+        booking.setNumberOfSeats(bookingDTO.getNumberOfSeats());
+        booking.setSeatsNumbers(bookingDTO.getSeatsNumbers());
+        booking.setPrice(bookingDTO.getPrice());
+        booking.setBookingTime(bookingDTO.getBookingTime());
+        booking.setUser(userRepository.findById(bookingDTO.getUserID())
+                .orElseThrow(()-> new RuntimeException("There is no user with id : " + bookingDTO.getUserID())));
+        booking.setShow(showRepository.findById(bookingDTO.getShowID())
+                .orElseThrow(()-> new RuntimeException("There is no show with id : " + bookingDTO.getShowID())));
+
+        return bookingRepository.save(booking);
     }
 
     public boolean isThereAnyAvailableSeats(Show show, Integer numberOfSeats){
@@ -64,6 +74,23 @@ public class BookingService {
                 .sum();
 
         return (show.getTheater().getTheaterCapacity() - bookedSeats) >= numberOfSeats;
+    }
+
+    public void validateDuplicationOfSeats(Show show, List<String> bookingSeatNumbers){
+        Set<String> alreadyOccupied = show.getBooking()
+                .stream()
+                .filter(b -> b.getBookingStatus() != BookingStatus.CANCELED)
+                .flatMap(b -> b.getSeatsNumbers().stream())
+                .collect(Collectors.toSet());
+
+        List<String> duplications = bookingSeatNumbers.
+                stream().
+                filter(alreadyOccupied :: contains)
+                .collect(Collectors.toList());
+        if(!duplications.isEmpty()){
+            throw new RuntimeException("Can't chose selected seats");
+        }
+
     }
 
     public Booking updateBooking(Long id, BookingDTO bookingDTO){
