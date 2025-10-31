@@ -11,16 +11,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.User;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.web.authentication.WebAuthenticationDetails;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
-import org.springframework.security.web.webauthn.authentication.WebAuthnAuthenticationFilter;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
-import java.security.Security;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -47,8 +42,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         jwtToken = requestHeader.substring(7); // This to get Jwt only, not with Bearer
-        username = jwtService.extractUsername(jwtToken);
+        username = jwtService.extractUsernameFromToken(jwtToken);
 
+        //Kda mafeesh any prev Security context for the user. Why? -> to avoid duplication wa validate the username.
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null){
             var userDetails = userRepository.findUserByUsername(username)
                     .orElseThrow(()-> new RuntimeException("There is no user found"));
