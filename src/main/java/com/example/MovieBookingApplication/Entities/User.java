@@ -8,6 +8,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Entity
@@ -25,7 +26,7 @@ public class User implements UserDetails {
     private String email;
 
     @ElementCollection(fetch = FetchType.EAGER)
-    private List<String> roles;
+    private Set<String> roles;
 
     @OneToMany(fetch = FetchType.LAZY, mappedBy = "booking")
     private List<Booking> bookings;
