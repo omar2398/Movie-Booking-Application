@@ -1,13 +1,13 @@
 package com.example.MovieBookingApplication.Repositories;
 
-import com.example.MovieBookingApplication.Entities.Theater;
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
-import java.util.Optional;
+import com.example.MovieBookingApplication.Entities.Theater;
 
 @Repository
 public interface TheaterRepository extends JpaRepository<Theater, Long> {
-    Optional<List<Theater>> findTheaterByLocation(String location);
+    List<Theater> findTheaterByTheaterLocation(String theaterLocation);
 }

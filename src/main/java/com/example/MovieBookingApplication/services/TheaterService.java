@@ -1,13 +1,14 @@
 package com.example.MovieBookingApplication.services;
 
-import com.example.MovieBookingApplication.Entities.Theater;
-import com.example.MovieBookingApplication.Repositories.TheaterRepository;
-import com.example.MovieBookingApplication.dtos.TheaterDTO;
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.Optional;
+import com.example.MovieBookingApplication.Entities.Theater;
+import com.example.MovieBookingApplication.Repositories.TheaterRepository;
+import com.example.MovieBookingApplication.dtos.TheaterDTO;
 
 @Service
 public class TheaterService {
@@ -15,10 +16,11 @@ public class TheaterService {
     private TheaterRepository theaterRepository;
 
     public List<Theater> getTheaterByLocation(String location){
-        Optional<List<Theater>> theatersBox = theaterRepository.findTheaterByLocation(location);
-        if (theatersBox.isPresent()){
-            return theatersBox.get();
-        }else throw new RuntimeException("There is no Theaters near to this location: "+ location);
+        List<Theater> theaters = theaterRepository.findTheaterByTheaterLocation(location);
+        if (theaters.isEmpty()){
+            throw new RuntimeException("There is no Theaters near to this location: "+ location);
+        }
+        return theaters;
     }
 
     public Theater addTheater(TheaterDTO theaterDTO){

@@ -31,3 +31,6 @@ build/
 
 ### VS Code ###
 .vscode/
+DRAWIO_INSTRUCTIONS.md
+project-structure.drawio
+
