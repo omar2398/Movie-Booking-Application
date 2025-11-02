@@ -48,8 +48,7 @@ public class JwtService {
     }
 
     private Key getSignInKey() {
-        byte[] keyBytes = secretKey.getBytes(StandardCharsets.UTF_8);
-        return Keys.hmacShaKeyFor(keyBytes);
+        return Keys.hmacShaKeyFor(secretKey.getBytes());
     }
 
     public String generateToken(Map<String, Object> extraClaims, User userDetails) {
